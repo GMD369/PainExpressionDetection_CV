@@ -1,0 +1,8 @@
+# Dataset images (too large for git)
+images/
+
+# Claude settings
+.claude/
+
+# Proposal document
+Dataset_Proposal.docx

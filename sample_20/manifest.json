@@ -1,0 +1,122 @@
+[
+  {
+    "label": "no_pain",
+    "file": "no_pain_01.png",
+    "source": "F:\\Semester 6\\Computer Vision\\Project\\Dataset\\images\\ll042t1aaunaff\\ll042t1aaunaff129.png",
+    "sharpness": 2216.51
+  },
+  {
+    "label": "no_pain",
+    "file": "no_pain_02.png",
+    "source": "F:\\Semester 6\\Computer Vision\\Project\\Dataset\\images\\ll042t1aaunaff\\ll042t1aaunaff124.png",
+    "sharpness": 2214.79
+  },
+  {
+    "label": "no_pain",
+    "file": "no_pain_03.png",
+    "source": "F:\\Semester 6\\Computer Vision\\Project\\Dataset\\images\\ll042t1aaunaff\\ll042t1aaunaff128.png",
+    "sharpness": 2209.51
+  },
+  {
+    "label": "no_pain",
+    "file": "no_pain_04.png",
+    "source": "F:\\Semester 6\\Computer Vision\\Project\\Dataset\\images\\ll042t1aaunaff\\ll042t1aaunaff123.png",
+    "sharpness": 2209.48
+  },
+  {
+    "label": "mild_pain",
+    "file": "mild_pain_01.png",
+    "source": "F:\\Semester 6\\Computer Vision\\Project\\Dataset\\images\\ll042t1aaaff\\ll042t1aaaff122.png",
+    "sharpness": 2088.51
+  },
+  {
+    "label": "mild_pain",
+    "file": "mild_pain_02.png",
+    "source": "F:\\Semester 6\\Computer Vision\\Project\\Dataset\\images\\ll042t1aaaff\\ll042t1aaaff102.png",
+    "sharpness": 2079.54
+  },
+  {
+    "label": "mild_pain",
+    "file": "mild_pain_03.png",
+    "source": "F:\\Semester 6\\Computer Vision\\Project\\Dataset\\images\\ll042t1aaaff\\ll042t1aaaff123.png",
+    "sharpness": 2079.33
+  },
+  {
+    "label": "mild_pain",
+    "file": "mild_pain_04.png",
+    "source": "F:\\Semester 6\\Computer Vision\\Project\\Dataset\\images\\ll042t1aaaff\\ll042t1aaaff126.png",
+    "sharpness": 2078.07
+  },
+  {
+    "label": "moderate_pain",
+    "file": "moderate_pain_01.png",
+    "source": "F:\\Semester 6\\Computer Vision\\Project\\Dataset\\images\\ll042t1aaaff\\ll042t1aaaff508.png",
+    "sharpness": 2316.62
+  },
+  {
+    "label": "moderate_pain",
+    "file": "moderate_pain_02.png",
+    "source": "F:\\Semester 6\\Computer Vision\\Project\\Dataset\\images\\ll042t1aaaff\\ll042t1aaaff509.png",
+    "sharpness": 2310.02
+  },
+  {
+    "label": "moderate_pain",
+    "file": "moderate_pain_03.png",
+    "source": "F:\\Semester 6\\Computer Vision\\Project\\Dataset\\images\\ll042t1aaaff\\ll042t1aaaff499.png",
+    "sharpness": 2309.55
+  },
+  {
+    "label": "moderate_pain",
+    "file": "moderate_pain_04.png",
+    "source": "F:\\Semester 6\\Computer Vision\\Project\\Dataset\\images\\ll042t1aaaff\\ll042t1aaaff502.png",
+    "sharpness": 2308.71
+  },
+  {
+    "label": "severe_pain",
+    "file": "severe_pain_01.png",
+    "source": "F:\\Semester 6\\Computer Vision\\Project\\Dataset\\images\\ll042t1afaff\\ll042t1afaff282.png",
+    "sharpness": 2281.33
+  },
+  {
+    "label": "severe_pain",
+    "file": "severe_pain_02.png",
+    "source": "F:\\Semester 6\\Computer Vision\\Project\\Dataset\\images\\ll042t1afaff\\ll042t1afaff268.png",
+    "sharpness": 2279.99
+  },
+  {
+    "label": "severe_pain",
+    "file": "severe_pain_03.png",
+    "source": "F:\\Semester 6\\Computer Vision\\Project\\Dataset\\images\\ll042t1afaff\\ll042t1afaff288.png",
+    "sharpness": 2271.01
+  },
+  {
+    "label": "severe_pain",
+    "file": "severe_pain_04.png",
+    "source": "F:\\Semester 6\\Computer Vision\\Project\\Dataset\\images\\ll042t1afaff\\ll042t1afaff280.png",
+    "sharpness": 2269.97
+  },
+  {
+    "label": "extreme_pain",
+    "file": "extreme_pain_01.png",
+    "source": "F:\\Semester 6\\Computer Vision\\Project\\Dataset\\images\\ll042t2afaff\\ll042t2afaff262.png",
+    "sharpness": 2279.05
+  },
+  {
+    "label": "extreme_pain",
+    "file": "extreme_pain_02.png",
+    "source": "F:\\Semester 6\\Computer Vision\\Project\\Dataset\\images\\ll042t2afaff\\ll042t2afaff263.png",
+    "sharpness": 2262.4
+  },
+  {
+    "label": "extreme_pain",
+    "file": "extreme_pain_03.png",
+    "source": "F:\\Semester 6\\Computer Vision\\Project\\Dataset\\images\\ll042t2afaff\\ll042t2afaff257.png",
+    "sharpness": 2260.07
+  },
+  {
+    "label": "extreme_pain",
+    "file": "extreme_pain_04.png",
+    "source": "F:\\Semester 6\\Computer Vision\\Project\\Dataset\\images\\ll042t2afaff\\ll042t2afaff261.png",
+    "sharpness": 2250.32
+  }
+]
