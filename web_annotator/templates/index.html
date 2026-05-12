@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pain Expression Annotator</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#1e1e2e;color:#e2e8f0;font-family:'Segoe UI',sans-serif;
+       height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+  /* ── Toolbar ── */
+  #toolbar{background:#181825;padding:7px 10px;display:flex;align-items:center;
+           gap:6px;border-bottom:1px solid #2d2d44;flex-shrink:0;flex-wrap:wrap}
+  #folder-path{flex:1;min-width:200px;background:#0f0f1a;border:1px solid #334155;
+               color:#e2e8f0;padding:5px 9px;border-radius:4px;font-size:12px}
+  #folder-path:focus{outline:none;border-color:#7c3aed}
+  #status{color:#94a3b8;font-size:11px;margin-left:auto;white-space:nowrap}
+
+  /* ── Layout ── */
+  #main{display:flex;flex:1;overflow:hidden}
+
+  /* ── Left panel ── */
+  #left-panel{width:195px;background:#181825;padding:6px 8px;
+              display:flex;flex-direction:column;gap:2px;
+              overflow-y:auto;flex-shrink:0;border-right:1px solid #2d2d44}
+
+  .sec{color:#7c3aed;font-size:10px;font-weight:bold;letter-spacing:.4px;
+       padding:9px 2px 3px;border-bottom:1px solid #7c3aed;margin-bottom:3px}
+
+  .radio-group label{display:flex;align-items:center;gap:6px;padding:3px 4px;
+                     cursor:pointer;font-size:12px;border-radius:3px}
+  .radio-group label:hover{background:#2d2d44}
+  .pain-lbl{font-weight:bold}
+
+  .nav-row{display:flex;gap:4px;margin:3px 0}
+  #progress{text-align:center;color:#94a3b8;font-size:11px;padding:2px}
+
+  .tips{font-family:'Courier New',monospace;font-size:10px;color:#64748b;
+        line-height:1.7;padding:3px 2px}
+
+  /* ── Canvas area ── */
+  #canvas-area{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:8px}
+  #filename-bar{text-align:center;font-weight:bold;font-size:12px;
+                color:#e2e8f0;padding:3px;flex-shrink:0}
+  #canvas{flex:1;background:#0f0f1a;cursor:crosshair;
+          border:2px solid #7c3aed;border-radius:4px;
+          display:block;width:100%;user-select:none;touch-action:none}
+
+  /* ── Right panel ── */
+  #right-panel{width:235px;background:#181825;padding:6px 8px;
+               display:flex;flex-direction:column;gap:4px;
+               overflow-y:auto;flex-shrink:0;border-left:1px solid #2d2d44}
+  .textbox{background:#0f0f1a;color:#e2e8f0;font-family:'Courier New',monospace;
+           font-size:10px;padding:6px;border-radius:4px;overflow-y:auto;
+           white-space:pre-wrap;line-height:1.5;flex:1;min-height:100px}
+  .statsbox{background:#0f0f1a;color:#94a3b8;font-family:'Courier New',monospace;
+            font-size:10px;padding:6px;border-radius:4px;white-space:pre;
+            line-height:1.5}
+
+  /* ── Buttons ── */
+  .btn{padding:5px 11px;border:none;border-radius:4px;font-size:11px;font-weight:bold;
+       cursor:pointer;color:#fff;transition:opacity .15s;font-family:'Segoe UI',sans-serif}
+  .btn:hover{opacity:.82}
+  .btn:active{opacity:.65}
+  .btn-purple{background:#7c3aed} .btn-green{background:#059669}
+  .btn-blue{background:#0369a1}   .btn-red{background:#dc2626}
+  .btn-slate{background:#334155}
+  .btn-full{width:100%;display:block;margin:2px 0;text-align:center}
+  .btn-sm{padding:4px 6px;font-size:10px}
+</style>
+</head>
+<body>
+
+<!-- Toolbar -->
+<div id="toolbar">
+  <button class="btn btn-purple" onclick="promptFolder()">Open Folder</button>
+  <input id="folder-path" type="text"
+         placeholder="Paste folder path here then press Enter or click Load…"
+         onkeydown="if(event.key==='Enter')loadFolder()">
+  <button class="btn btn-slate" onclick="loadFolder()">Load</button>
+  <button class="btn btn-green"  onclick="saveAnnotations()">Save</button>
+  <button class="btn btn-blue"   onclick="exportCSV()">Export CSV</button>
+  <button class="btn btn-red"    onclick="clearAnnotations()">Clear</button>
+  <span id="status"></span>
+</div>
+
+<!-- Main -->
+<div id="main">
+
+  <!-- Left Panel -->
+  <div id="left-panel">
+    <div class="sec">ANNOTATION MODE</div>
+    <div class="radio-group" id="mode-group">
+      <label><input type="radio" name="mode" value="Classification" checked onchange="onModeChange()"> Classification</label>
+      <label><input type="radio" name="mode" value="Detection (BBox)"         onchange="onModeChange()"> Detection (BBox)</label>
+      <label><input type="radio" name="mode" value="Segmentation (Polygon)"   onchange="onModeChange()"> Segmentation (Poly)</label>
+    </div>
+
+    <div class="sec">PAIN LABEL</div>
+    <div class="radio-group" id="label-group"></div>
+
+    <div class="sec">NAVIGATION</div>
+    <div class="nav-row">
+      <button class="btn btn-slate btn-sm btn-full" style="flex:1" onclick="prevImage()">◀ Prev</button>
+      <button class="btn btn-slate btn-sm btn-full" style="flex:1" onclick="nextImage()">Next ▶</button>
+    </div>
+    <div id="progress">0 / 0</div>
+
+    <div class="sec">INSTRUCTIONS</div>
+    <div class="tips">Classification:
+  Select label → Apply
+
+Detection (BBox):
+  Click &amp; drag
+
+Segmentation:
+  Click to add pts
+  Dbl-click to close
+  Right-click undo pt</div>
+
+    <div class="sec"></div>
+    <button class="btn btn-purple btn-full" onclick="applyClassification()">Apply Classification</button>
+    <button class="btn btn-blue   btn-full" onclick="finishPolygon()">Finish Polygon</button>
+  </div>
+
+  <!-- Canvas -->
+  <div id="canvas-area">
+    <div id="filename-bar">No image loaded</div>
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <!-- Right Panel -->
+  <div id="right-panel">
+    <div class="sec">CURRENT ANNOTATIONS</div>
+    <div class="textbox" id="ann-panel">(no annotations yet)</div>
+    <div class="sec" style="margin-top:6px">DATASET STATS</div>
+    <div class="statsbox" id="stats-panel">Total images : 0
+Annotated    : 0
+Remaining    : 0</div>
+  </div>
+
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
