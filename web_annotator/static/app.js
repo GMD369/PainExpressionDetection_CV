@@ -96,33 +96,69 @@ function initKeyboard() {
   });
 }
 
-// ── Folder loading ─────────────────────────────────────────────────────────────
-function promptFolder() {
-  document.getElementById("folder-path").focus();
-  setStatus("Paste the full folder path then press Enter or click Load");
-}
+// ── Dataset upload ─────────────────────────────────────────────────────────────
+async function handleUpload(event) {
+  const files = Array.from(event.target.files)
+    .filter(f => /\.(jpe?g|png|bmp|tiff?)$/i.test(f.name));
 
-async function loadFolder() {
-  const path = document.getElementById("folder-path").value.trim();
-  if (!path) return;
-  try {
-    const res  = await fetch("/api/open-folder", {
-      method:  "POST",
-      headers: {"Content-Type": "application/json"},
-      body:    JSON.stringify({path}),
-    });
-    const data = await res.json();
-    if (!res.ok) { setStatus("Error: " + data.error, true); return; }
+  if (!files.length) { setStatus("No image files found in selection", true); return; }
 
-    S.imageList    = data.images;
-    S.annotations  = data.annotations || {};
-    S.currentIndex = 0;
-    setStatus(`Loaded ${data.images.length} images`);
-    loadImage(0);
-    updateStats();
-  } catch {
-    setStatus("Could not reach server", true);
-  }
+  // Show progress bar
+  const bar  = document.getElementById("upload-bar");
+  const prog = document.getElementById("upload-progress");
+  const pct  = document.getElementById("upload-pct");
+  bar.style.display = "flex";
+  document.getElementById("upload-info").textContent = `Uploading ${files.length} files…`;
+
+  const formData = new FormData();
+  files.forEach(f => formData.append("files", f, f.webkitRelativePath || f.name));
+
+  // XHR so we get upload progress events
+  await new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/upload");
+
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable) {
+        const p = Math.round((e.loaded / e.total) * 100);
+        prog.value = p;
+        pct.textContent = p + "%";
+      }
+    };
+
+    xhr.onload = async () => {
+      bar.style.display = "none";
+      const data = JSON.parse(xhr.responseText);
+      if (xhr.status !== 200) {
+        setStatus("Upload failed: " + data.error, true);
+        document.getElementById("upload-info").textContent = "Upload failed";
+        reject(); return;
+      }
+      S.imageList    = data.images;
+      S.annotations  = data.annotations || {};
+      S.currentIndex = 0;
+
+      // Show dataset name (top-level folder from first file's path)
+      const topFolder = (files[0].webkitRelativePath || "").split("/")[0] || "dataset";
+      document.getElementById("upload-info").textContent =
+        `${topFolder}  (${data.images.length} images)`;
+      setStatus(`Loaded ${data.images.length} images`);
+      loadImage(0);
+      updateStats();
+      resolve();
+    };
+
+    xhr.onerror = () => {
+      bar.style.display = "none";
+      setStatus("Upload failed", true);
+      reject();
+    };
+
+    xhr.send(formData);
+  }).catch(() => {});
+
+  // Reset input so the same folder can be re-selected
+  event.target.value = "";
 }
 
 // ── Image loading ──────────────────────────────────────────────────────────────
@@ -239,7 +275,7 @@ function nextImage() { if (S.currentIndex < S.imageList.length-1) loadImage(S.cu
 
 // ── Save / Export / Clear ──────────────────────────────────────────────────────
 async function saveAnnotations() {
-  if (!S.imageList.length) { setStatus("No folder loaded", true); return; }
+  if (!S.imageList.length) { setStatus("Upload a dataset first", true); return; }
   try {
     const res = await fetch("/api/annotations", {
       method:  "POST",
@@ -251,7 +287,8 @@ async function saveAnnotations() {
   } catch { setStatus("Save failed", true); }
 }
 
-function exportCSV() { window.location.href = "/api/export-csv"; }
+function exportCSV()    { window.location.href = "/api/export-csv"; }
+function exportImages() { window.location.href = "/api/export-images"; }
 
 function clearAnnotations() {
   if (!S.imageList.length) return;

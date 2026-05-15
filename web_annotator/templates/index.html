@@ -12,10 +12,12 @@
   /* ── Toolbar ── */
   #toolbar{background:#181825;padding:7px 10px;display:flex;align-items:center;
            gap:6px;border-bottom:1px solid #2d2d44;flex-shrink:0;flex-wrap:wrap}
-  #folder-path{flex:1;min-width:200px;background:#0f0f1a;border:1px solid #334155;
-               color:#e2e8f0;padding:5px 9px;border-radius:4px;font-size:12px}
-  #folder-path:focus{outline:none;border-color:#7c3aed}
+  #upload-info{color:#94a3b8;font-size:11px;white-space:nowrap;max-width:260px;
+               overflow:hidden;text-overflow:ellipsis}
   #status{color:#94a3b8;font-size:11px;margin-left:auto;white-space:nowrap}
+  /* upload progress bar */
+  #upload-bar{display:none;align-items:center;gap:6px;font-size:11px;color:#94a3b8}
+  #upload-bar progress{width:120px;accent-color:#7c3aed}
 
   /* ── Layout ── */
   #main{display:flex;flex:1;overflow:hidden}
@@ -72,16 +74,21 @@
 </head>
 <body>
 
+<!-- Hidden file input — webkitdirectory picks an entire folder -->
+<input type="file" id="file-input" webkitdirectory multiple style="display:none"
+       onchange="handleUpload(event)">
+
 <!-- Toolbar -->
 <div id="toolbar">
-  <button class="btn btn-purple" onclick="promptFolder()">Open Folder</button>
-  <input id="folder-path" type="text"
-         placeholder="Paste folder path here then press Enter or click Load…"
-         onkeydown="if(event.key==='Enter')loadFolder()">
-  <button class="btn btn-slate" onclick="loadFolder()">Load</button>
-  <button class="btn btn-green"  onclick="saveAnnotations()">Save</button>
-  <button class="btn btn-blue"   onclick="exportCSV()">Export CSV</button>
-  <button class="btn btn-red"    onclick="clearAnnotations()">Clear</button>
+  <button class="btn btn-purple" onclick="document.getElementById('file-input').click()">
+    Upload Dataset
+  </button>
+  <span id="upload-info">No dataset loaded</span>
+  <div id="upload-bar"><progress id="upload-progress" value="0" max="100"></progress><span id="upload-pct">0%</span></div>
+  <button class="btn btn-green"   onclick="saveAnnotations()">Save</button>
+  <button class="btn btn-blue"    onclick="exportCSV()">Export CSV</button>
+  <button class="btn btn-slate"   onclick="exportImages()">Export Images</button>
+  <button class="btn btn-red"     onclick="clearAnnotations()">Clear</button>
   <span id="status"></span>
 </div>
 
