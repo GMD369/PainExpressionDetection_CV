@@ -1,0 +1,11 @@
+               precision    recall  f1-score   support
+
+ extreme_pain       0.99      0.98      0.98       904
+    mild_pain       0.98      0.99      0.99       608
+moderate_pain       0.98      0.98      0.98       758
+      no_pain       0.99      1.00      0.99      1610
+  severe_pain       0.98      0.97      0.98       756
+
+     accuracy                           0.99      4636
+    macro avg       0.98      0.98      0.98      4636
+ weighted avg       0.99      0.99      0.99      4636
