@@ -21,7 +21,7 @@ ROOT      = Path(__file__).resolve().parent.parent
 MODEL_DIR = ROOT / "week2" / "output"
 MODEL_PATH = MODEL_DIR / "model.pkl"
 
-PAIN_LABELS = ["no_pain", "mild_pain", "moderate_pain", "severe_pain", "extreme_pain"]
+PAIN_LABELS = ["No_Pain", "Mild", "Moderate", "Severe"]
 TRANSFORM   = T.Compose([
     T.Resize((224, 224)),
     T.ToTensor(),

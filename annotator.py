@@ -12,10 +12,9 @@ from PIL import Image, ImageTk
 import csv
 
 # ── Constants ────────────────────────────────────────────────────────────────
-PAIN_LABELS = ["no_pain", "mild_pain", "moderate_pain", "severe_pain", "extreme_pain"]
-COLORS      = {"no_pain": "#2ecc71", "mild_pain": "#f1c40f",
-               "moderate_pain": "#e67e22", "severe_pain": "#e74c3c",
-               "extreme_pain": "#8e44ad"}
+PAIN_LABELS = ["No_Pain", "Mild", "Moderate", "Severe"]
+COLORS      = {"No_Pain": "#2ecc71", "Mild": "#f1c40f",
+               "Moderate": "#e67e22", "Severe": "#e74c3c"}
 MODES       = ["Classification", "Detection (BBox)", "Segmentation (Polygon)"]
 SAVE_FILE   = "annotations.json"
 

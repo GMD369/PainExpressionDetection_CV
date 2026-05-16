@@ -1,6 +1,8 @@
 """
 Week 2 — Pain Expression Classification
-Pipeline: Load dataset → ResNet50 features → SVM (5-fold CV) → Metrics + Plots
+Dataset : 4 classes × 2000 images = 8000 total (perfectly balanced)
+Structure: images/Label/Label/*.jpg
+Pipeline : Load → ResNet50 features → SVM (5-fold CV) → Metrics + Plots
 """
 
 import os, json, pickle
@@ -27,48 +29,45 @@ import torch
 import torchvision.models as models
 import torchvision.transforms as T
 
-# ── Paths ──────────────────────────────────────────────────────────────────────
-ROOT   = Path(__file__).resolve().parent.parent          # PainExpressionDetection_CV/
+# ── Paths & constants ──────────────────────────────────────────────────────────
+ROOT   = Path(__file__).resolve().parent.parent
 IMAGES = ROOT / "images"
 OUT    = ROOT / "week2" / "output"
 OUT.mkdir(parents=True, exist_ok=True)
 
-PAIN_LABELS = ["no_pain", "mild_pain", "moderate_pain", "severe_pain", "extreme_pain"]
-COLORS_MAP  = dict(zip(PAIN_LABELS, ["#2ecc71","#f1c40f","#e67e22","#e74c3c","#8e44ad"]))
+LABELS     = ["No_Pain", "Mild", "Moderate", "Severe"]
+COLORS_MAP = {
+    "No_Pain":  "#2ecc71",
+    "Mild":     "#f1c40f",
+    "Moderate": "#e67e22",
+    "Severe":   "#e74c3c",
+}
+
+IMG_EXTS = {".jpg", ".jpeg", ".png", ".bmp"}
 
 
 # ── 1. Dataset loading ─────────────────────────────────────────────────────────
-def _temporal_label(idx: int, total: int) -> str:
-    pos = idx / total
-    if pos < 0.20: return "mild_pain"
-    if pos < 0.45: return "moderate_pain"
-    if pos < 0.70: return "severe_pain"
-    return "extreme_pain"
-
-
 def load_dataset() -> tuple[list, list]:
     """
-    Assigns labels by folder type and temporal frame position — the same
-    strategy used in select_20.py.  Each 'aff' (affected/pain) sequence has
-    frames divided into 4 pain levels; 'unaff' frames are all no_pain.
+    Labels come directly from folder names — no guessing needed.
+    Structure: images/Label/Label/*.jpg
     """
     paths, labels = [], []
-    for folder in sorted(os.listdir(IMAGES)):
-        folder_abs = IMAGES / folder
-        if not folder_abs.is_dir():
-            continue
-        is_unaff = "unaff" in folder
-        imgs = sorted(folder_abs.glob("*.png"))
-        n    = len(imgs)
-        for i, img in enumerate(imgs):
-            lbl = "no_pain" if is_unaff else _temporal_label(i, n)
-            paths.append(img)
-            labels.append(lbl)
 
-    dist = dict(sorted(Counter(labels).items()))
-    print(f"  Total images : {len(paths)}")
-    for lbl, cnt in dist.items():
-        print(f"  {lbl:<22} {cnt}")
+    for label in LABELS:
+        img_dir = IMAGES / label / label          # nested same-name subfolder
+        if not img_dir.exists():
+            print(f"  WARNING: {img_dir} not found, skipping.")
+            continue
+        imgs = sorted([
+            p for p in img_dir.iterdir()
+            if p.suffix.lower() in IMG_EXTS
+        ])
+        paths.extend(imgs)
+        labels.extend([label] * len(imgs))
+        print(f"  {label:<12} {len(imgs)} images")
+
+    print(f"  {'TOTAL':<12} {len(paths)} images")
     return paths, labels
 
 
@@ -80,24 +79,22 @@ TRANSFORM = T.Compose([
 ])
 
 def extract_features(paths: list, batch_size: int = 64) -> np.ndarray:
-    """ResNet50 (avgpool output = 2048-d) as a fixed feature extractor."""
+    """ResNet50 avgpool output → 2048-d feature vector per image."""
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"  Device : {device}")
 
-    model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
-    model.fc = torch.nn.Identity()          # remove classification head
+    model    = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
+    model.fc = torch.nn.Identity()
     model    = model.to(device).eval()
 
     all_feats = []
     with torch.no_grad():
         for start in range(0, len(paths), batch_size):
-            batch_paths = paths[start : start + batch_size]
-            imgs = torch.stack([
+            batch = torch.stack([
                 TRANSFORM(Image.open(p).convert("RGB"))
-                for p in batch_paths
+                for p in paths[start : start + batch_size]
             ]).to(device)
-            feats = model(imgs).cpu().numpy()
-            all_feats.append(feats)
+            all_feats.append(model(batch).cpu().numpy())
             done = min(start + batch_size, len(paths))
             print(f"  {done:>5}/{len(paths)}  ({100*done/len(paths):.1f}%)", end="\r")
 
@@ -116,7 +113,7 @@ def load_or_extract(paths: list, labels: list) -> tuple[np.ndarray, list]:
     else:
         features = extract_features(paths)
         np.save(feat_cache, features)
-        np.save(lbl_cache, np.array(labels))
+        np.save(lbl_cache,  np.array(labels))
         print(f"  Cached → {feat_cache}")
 
     print(f"  Feature matrix : {features.shape}")
@@ -125,15 +122,14 @@ def load_or_extract(paths: list, labels: list) -> tuple[np.ndarray, list]:
 
 # ── 3. Label distribution plot ─────────────────────────────────────────────────
 def plot_label_distribution(labels: list):
-    counts = [Counter(labels)[l] for l in PAIN_LABELS]
-    colors = [COLORS_MAP[l] for l in PAIN_LABELS]
-    names  = [l.replace("_", "\n") for l in PAIN_LABELS]
+    counts = [Counter(labels)[l] for l in LABELS]
+    colors = [COLORS_MAP[l] for l in LABELS]
 
-    fig, ax = plt.subplots(figsize=(9, 4))
-    bars = ax.bar(names, counts, color=colors, edgecolor="#111", linewidth=0.6)
+    fig, ax = plt.subplots(figsize=(8, 4))
+    bars = ax.bar(LABELS, counts, color=colors, edgecolor="#111", linewidth=0.6)
     for bar, cnt in zip(bars, counts):
-        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 10,
-                str(cnt), ha="center", va="bottom", fontsize=9)
+        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 15,
+                str(cnt), ha="center", va="bottom", fontsize=10)
     ax.set_title("Dataset Label Distribution", fontsize=13, weight="bold")
     ax.set_ylabel("Number of images")
     ax.set_ylim(0, max(counts) * 1.15)
@@ -144,15 +140,17 @@ def plot_label_distribution(labels: list):
     print(f"  Saved → {OUT / 'label_distribution.png'}")
 
 
-# ── 4. Train + evaluate (SVM, 5-fold CV) ──────────────────────────────────────
+# ── 4. Train + evaluate ────────────────────────────────────────────────────────
 def train_and_evaluate(features: np.ndarray, labels: list) -> dict:
-    le      = LabelEncoder().fit(PAIN_LABELS)   # fixed order
-    y       = le.transform(labels)
-    scaler  = StandardScaler()
-    X       = scaler.fit_transform(features)
+    le = LabelEncoder().fit(LABELS)          # fixed order
+    y  = le.transform(labels)
 
+    scaler = StandardScaler()
+    X      = scaler.fit_transform(features)
+
+    # Dataset is balanced so no class_weight needed
     clf = SVC(kernel="rbf", C=10, gamma="scale",
-              probability=True, random_state=42, class_weight="balanced")
+              probability=True, random_state=42)
 
     print("  Running 5-fold stratified cross-validation…")
     cv     = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
@@ -166,34 +164,31 @@ def train_and_evaluate(features: np.ndarray, labels: list) -> dict:
     print(f"  Weighted F1 Score : {f1_w:.4f}")
     print("\n" + report)
 
-    # Train final model on ALL data for saving
-    clf.fit(X, y)
+    clf.fit(X, y)       # final model on all data
     return clf, scaler, le, {
-        "accuracy":     round(float(acc), 4),
-        "f1_weighted":  round(float(f1_w), 4),
-        "y":            y,
-        "y_pred":       y_pred,
-        "classes":      list(le.classes_),
-        "report":       report,
+        "accuracy":    round(float(acc), 4),
+        "f1_weighted": round(float(f1_w), 4),
+        "y":           y,
+        "y_pred":      y_pred,
+        "classes":     list(le.classes_),
+        "report":      report,
     }
 
 
 # ── 5. Confusion matrix ────────────────────────────────────────────────────────
 def plot_confusion_matrix(y, y_pred, classes: list):
     cm   = confusion_matrix(y, y_pred)
-    norm = cm.astype(float) / cm.sum(axis=1, keepdims=True)  # row-normalised
+    norm = cm.astype(float) / cm.sum(axis=1, keepdims=True)
 
-    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-    labels = [c.replace("_", "\n") for c in classes]
-
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
     for ax, data, title, fmt in zip(
         axes,
-        [cm, norm],
+        [cm,   norm],
         ["Confusion Matrix (counts)", "Confusion Matrix (normalised)"],
-        ["d", ".2f"],
+        ["d",  ".2f"],
     ):
         sns.heatmap(data, annot=True, fmt=fmt, cmap="Purples",
-                    xticklabels=labels, yticklabels=labels, ax=ax,
+                    xticklabels=classes, yticklabels=classes, ax=ax,
                     linewidths=0.4, linecolor="#333")
         ax.set_xlabel("Predicted", fontsize=10)
         ax.set_ylabel("True",      fontsize=10)
@@ -205,9 +200,8 @@ def plot_confusion_matrix(y, y_pred, classes: list):
     print(f"  Saved → {OUT / 'confusion_matrix.png'}")
 
 
-# ── 6. t-SNE feature visualisation ────────────────────────────────────────────
-def plot_tsne(features: np.ndarray, labels: list, sample_n: int = 1500):
-    # Sub-sample for speed if dataset is large
+# ── 6. t-SNE visualisation ─────────────────────────────────────────────────────
+def plot_tsne(features: np.ndarray, labels: list, sample_n: int = 2000):
     if len(labels) > sample_n:
         rng  = np.random.default_rng(42)
         idx  = rng.choice(len(labels), size=sample_n, replace=False)
@@ -217,20 +211,19 @@ def plot_tsne(features: np.ndarray, labels: list, sample_n: int = 1500):
         feat, lbls = features, labels
 
     print(f"  PCA 2048→50 on {len(lbls)} samples…")
-    pca    = PCA(n_components=50, random_state=42)
-    reduced = pca.fit_transform(feat)
+    reduced = PCA(n_components=50, random_state=42).fit_transform(feat)
 
-    print("  t-SNE 50→2 (this takes ~2 min)…")
-    tsne   = TSNE(n_components=2, perplexity=30, random_state=42, n_jobs=-1)
-    emb    = tsne.fit_transform(reduced)
+    print("  t-SNE 50→2…")
+    emb = TSNE(n_components=2, perplexity=40, random_state=42,
+               n_jobs=-1).fit_transform(reduced)
 
     fig, ax = plt.subplots(figsize=(9, 7))
-    for lbl in PAIN_LABELS:
+    for lbl in LABELS:
         mask = np.array(lbls) == lbl
         ax.scatter(emb[mask, 0], emb[mask, 1],
-                   c=COLORS_MAP[lbl], label=lbl.replace("_", " "),
-                   s=12, alpha=0.65, edgecolors="none")
-    ax.legend(fontsize=9, markerscale=2)
+                   c=COLORS_MAP[lbl], label=lbl,
+                   s=10, alpha=0.6, edgecolors="none")
+    ax.legend(fontsize=10, markerscale=2.5)
     ax.set_title("t-SNE of ResNet50 Features", fontsize=13, weight="bold")
     ax.axis("off")
     fig.tight_layout()
@@ -239,7 +232,7 @@ def plot_tsne(features: np.ndarray, labels: list, sample_n: int = 1500):
     print(f"  Saved → {OUT / 'tsne.png'}")
 
 
-# ── 7. Save model and metrics ──────────────────────────────────────────────────
+# ── 7. Save model & metrics ────────────────────────────────────────────────────
 def save_outputs(clf, scaler, le, metrics: dict):
     with open(OUT / "model.pkl", "wb") as f:
         pickle.dump({"clf": clf, "scaler": scaler, "le": le}, f)
@@ -272,7 +265,7 @@ if __name__ == "__main__":
     print("\n[4/6] Training SVM (5-fold CV)…")
     clf, scaler, le, metrics = train_and_evaluate(features, labels)
 
-    print("\n[5/6] Plotting confusion matrix…")
+    print("\n[5/6] Confusion matrix…")
     plot_confusion_matrix(metrics["y"], metrics["y_pred"], metrics["classes"])
 
     print("\n[6/6] t-SNE visualisation…")
