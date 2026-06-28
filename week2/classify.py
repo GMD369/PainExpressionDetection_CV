@@ -1,8 +1,16 @@
 """
 Week 2 — Pain Expression Classification
-Dataset : 4 classes × 2000 images = 8000 total (perfectly balanced)
-Structure: images/Label/Label/*.jpg
-Pipeline : Load → ResNet50 features → SVM (5-fold CV) → Metrics + Plots
+Datasets:
+  • images/extracted_frames/<PainLevel>/*.jpg  (Dynamic_faces — extracted by extract_frames.py)
+  • images/Emotional_faces/Emotional_faces/<subject>/<emotion>.jpg
+
+Emotion → Pain Level mapping:
+  neutral / happiness → No_Pain
+  sadness             → Mild
+  fear / surprise     → Moderate
+  anger / disgust     → Severe
+
+Pipeline: Load → ResNet50 features → SVM (5-fold CV) → Metrics + Plots
 """
 
 import os, json, pickle
@@ -30,9 +38,8 @@ import torchvision.models as models
 import torchvision.transforms as T
 
 # ── Paths & constants ──────────────────────────────────────────────────────────
-ROOT   = Path(__file__).resolve().parent.parent
-IMAGES = ROOT / "images"
-OUT    = ROOT / "week2" / "output"
+ROOT    = Path(__file__).resolve().parent.parent
+OUT     = ROOT / "week2" / "output"
 OUT.mkdir(parents=True, exist_ok=True)
 
 LABELS     = ["No_Pain", "Mild", "Moderate", "Severe"]
@@ -42,32 +49,84 @@ COLORS_MAP = {
     "Moderate": "#e67e22",
     "Severe":   "#e74c3c",
 }
-
 IMG_EXTS = {".jpg", ".jpeg", ".png", ".bmp"}
+
+# Emotional_faces: filename → pain level
+EMOTION_TO_PAIN = {
+    "neutral":   "No_Pain",
+    "happiness": "No_Pain",
+    "hapiness":  "No_Pain",   # dataset typo
+    "sadness":   "Mild",
+    "fear":      "Moderate",
+    "surprise":  "Moderate",
+    "suprise":   "Moderate",  # dataset typo
+    "surpris":   "Moderate",  # dataset typo
+    "anger":     "Severe",
+    "disgust":   "Severe",
+    "disgest":   "Severe",    # dataset typo
+}
 
 
 # ── 1. Dataset loading ─────────────────────────────────────────────────────────
-def load_dataset() -> tuple[list, list]:
-    """
-    Labels come directly from folder names — no guessing needed.
-    Structure: images/Label/Label/*.jpg
-    """
+def load_extracted_frames() -> tuple[list, list]:
+    """Load frames extracted from Dynamic_faces videos (images/extracted_frames/)."""
+    frames_root = ROOT / "images" / "extracted_frames"
     paths, labels = [], []
 
+    if not frames_root.exists():
+        print("  WARNING: extracted_frames/ not found — run extract_frames.py first")
+        return paths, labels
+
     for label in LABELS:
-        img_dir = IMAGES / label / label          # nested same-name subfolder
-        if not img_dir.exists():
-            print(f"  WARNING: {img_dir} not found, skipping.")
+        label_dir = frames_root / label
+        if not label_dir.exists():
             continue
-        imgs = sorted([
-            p for p in img_dir.iterdir()
-            if p.suffix.lower() in IMG_EXTS
-        ])
+        imgs = sorted([p for p in label_dir.iterdir() if p.suffix.lower() in IMG_EXTS])
         paths.extend(imgs)
         labels.extend([label] * len(imgs))
-        print(f"  {label:<12} {len(imgs)} images")
+        print(f"  [Dynamic]  {label:<12} {len(imgs)} frames")
 
-    print(f"  {'TOTAL':<12} {len(paths)} images")
+    return paths, labels
+
+
+def load_emotional_faces() -> tuple[list, list]:
+    """Load static images from Emotional_faces, mapping emotion filename → pain level."""
+    emo_root = ROOT / "images" / "Emotional_faces" / "Emotional_faces"
+    paths, labels = [], []
+
+    if not emo_root.exists():
+        print("  WARNING: Emotional_faces/ not found")
+        return paths, labels
+
+    for subject_dir in sorted(emo_root.iterdir()):
+        if not subject_dir.is_dir():
+            continue
+        for img_path in sorted(subject_dir.iterdir()):
+            if img_path.suffix.lower() not in IMG_EXTS:
+                continue
+            emotion    = img_path.stem.lower()
+            pain_level = EMOTION_TO_PAIN.get(emotion)
+            if pain_level is None:
+                continue
+            paths.append(img_path)
+            labels.append(pain_level)
+
+    # print per-class summary
+    counts = Counter(labels)
+    for label in LABELS:
+        print(f"  [Emotional]{label:<12} {counts.get(label, 0)} images")
+
+    return paths, labels
+
+
+def load_dataset() -> tuple[list, list]:
+    dyn_paths,  dyn_labels  = load_extracted_frames()
+    emo_paths,  emo_labels  = load_emotional_faces()
+
+    paths  = dyn_paths  + emo_paths
+    labels = dyn_labels + emo_labels
+
+    print(f"  {'TOTAL':<22} {len(paths)} images")
     return paths, labels
 
 
@@ -128,11 +187,11 @@ def plot_label_distribution(labels: list):
     fig, ax = plt.subplots(figsize=(8, 4))
     bars = ax.bar(LABELS, counts, color=colors, edgecolor="#111", linewidth=0.6)
     for bar, cnt in zip(bars, counts):
-        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 15,
+        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 10,
                 str(cnt), ha="center", va="bottom", fontsize=10)
     ax.set_title("Dataset Label Distribution", fontsize=13, weight="bold")
     ax.set_ylabel("Number of images")
-    ax.set_ylim(0, max(counts) * 1.15)
+    ax.set_ylim(0, max(counts) * 1.18)
     ax.grid(axis="y", alpha=0.3)
     fig.tight_layout()
     fig.savefig(OUT / "label_distribution.png", dpi=150)
@@ -142,15 +201,15 @@ def plot_label_distribution(labels: list):
 
 # ── 4. Train + evaluate ────────────────────────────────────────────────────────
 def train_and_evaluate(features: np.ndarray, labels: list) -> dict:
-    le = LabelEncoder().fit(LABELS)          # fixed order
+    le = LabelEncoder().fit(LABELS)
     y  = le.transform(labels)
 
     scaler = StandardScaler()
     X      = scaler.fit_transform(features)
 
-    # Dataset is balanced so no class_weight needed
+    # class_weight='balanced' handles the Severe class being over-represented
     clf = SVC(kernel="rbf", C=10, gamma="scale",
-              probability=True, random_state=42)
+              probability=True, class_weight="balanced", random_state=42)
 
     print("  Running 5-fold stratified cross-validation…")
     cv     = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
@@ -164,7 +223,7 @@ def train_and_evaluate(features: np.ndarray, labels: list) -> dict:
     print(f"  Weighted F1 Score : {f1_w:.4f}")
     print("\n" + report)
 
-    clf.fit(X, y)       # final model on all data
+    clf.fit(X, y)
     return clf, scaler, le, {
         "accuracy":    round(float(acc), 4),
         "f1_weighted": round(float(f1_w), 4),
@@ -251,10 +310,16 @@ def save_outputs(clf, scaler, le, metrics: dict):
 if __name__ == "__main__":
     print("=" * 55)
     print(" Week 2 — Pain Expression Classification")
+    print(" Sources: Dynamic_faces (frames) + Emotional_faces")
     print("=" * 55)
 
     print("\n[1/6] Loading dataset…")
     paths, labels = load_dataset()
+
+    if not paths:
+        print("\nERROR: No images loaded.")
+        print("Run extract_frames.py first to extract frames from Dynamic_faces videos.")
+        raise SystemExit(1)
 
     print("\n[2/6] Label distribution…")
     plot_label_distribution(labels)

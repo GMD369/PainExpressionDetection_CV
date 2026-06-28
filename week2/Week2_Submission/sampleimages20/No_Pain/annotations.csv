@@ -1,0 +1,11 @@
+filename,classification,ann_type,x1,y1,x2,y2,label,polygon_pts,note
+No_Pain_01.jpg,No_Pain,bbox,2,7,107,107,No_Pain,,
+No_Pain_01.jpg,No_Pain,polygon,,,,,No_Pain,"[[78, 8], [105, 8], [107, 44], [107, 85], [108, 107], [75, 106], [4, 105], [1, 5], [78, 8]]",
+No_Pain_02.jpg,No_Pain,bbox,2,4,112,119,No_Pain,,
+No_Pain_02.jpg,No_Pain,polygon,,,,,No_Pain,"[[2, 21], [1, 75], [3, 118], [112, 118], [111, 3], [47, 2], [2, 2], [6, 22]]",
+No_Pain_03.jpg,No_Pain,bbox,1,1,133,121,No_Pain,,
+No_Pain_03.jpg,No_Pain,polygon,,,,,No_Pain,"[[62, 0], [133, 3], [132, 53], [132, 119], [70, 119], [2, 121], [0, 53], [1, 1], [65, 1]]",
+No_Pain_04.jpg,No_Pain,bbox,1,-1,49,57,No_Pain,,
+No_Pain_04.jpg,No_Pain,polygon,,,,,No_Pain,"[[1, -2], [1, 54], [47, 55], [49, -1], [1, -3]]",
+No_Pain_05.jpg,No_Pain,bbox,0,1,110,122,No_Pain,,
+No_Pain_05.jpg,No_Pain,polygon,,,,,No_Pain,"[[0, 3], [0, 61], [2, 122], [110, 122], [114, 61], [110, 3], [-3, 6]]",

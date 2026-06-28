@@ -6,3 +6,19 @@ images/
 
 # Proposal document
 Dataset_Proposal.docx
+
+# Large dataset ZIPs (download from Google Drive)
+week4/pain_dataset_new.zip
+week4/grabcut_dataset.zip
+week4/grabcut_work/
+
+# Model weights (large binaries)
+week3/Week3_Results/best.pt
+week4/Week4_Results/best_seg.pt
+
+# Web annotator uploads
+web_annotator/uploads/
+
+# Python cache
+__pycache__/
+*.pyc

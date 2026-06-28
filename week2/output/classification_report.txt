@@ -1,10 +1,10 @@
               precision    recall  f1-score   support
 
-        Mild       0.89      0.90      0.90      2000
-    Moderate       0.86      0.89      0.88      2000
-     No_Pain       0.93      0.91      0.92      2000
-      Severe       0.97      0.95      0.96      2000
+        Mild       0.92      0.79      0.85       360
+    Moderate       0.91      0.97      0.94       720
+     No_Pain       0.92      0.89      0.90       488
+      Severe       0.90      0.93      0.91       720
 
-    accuracy                           0.91      8000
-   macro avg       0.91      0.91      0.91      8000
-weighted avg       0.91      0.91      0.91      8000
+    accuracy                           0.91      2288
+   macro avg       0.91      0.89      0.90      2288
+weighted avg       0.91      0.91      0.91      2288

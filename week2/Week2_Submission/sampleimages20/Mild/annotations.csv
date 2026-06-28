@@ -1,0 +1,11 @@
+filename,classification,ann_type,x1,y1,x2,y2,label,polygon_pts,note
+Mild_04.jpg,Mild,bbox,8,24,184,276,Mild,,
+Mild_04.jpg,Mild,polygon,,,,,Mild,"[[8, 62], [9, 166], [8, 278], [72, 274], [187, 275], [182, 190], [184, 94], [182, 25], [52, 23], [9, 57]]",
+Mild_03.jpg,Mild,bbox,17,27,185,266,Mild,,
+Mild_03.jpg,Mild,polygon,,,,,Mild,"[[16, 67], [16, 194], [19, 266], [186, 265], [185, 30], [14, 27]]",
+Mild_02.jpg,Mild,bbox,10,22,196,262,Mild,,
+Mild_02.jpg,Mild,polygon,,,,,Mild,"[[10, 26], [193, 23], [196, 263], [8, 261], [8, 25]]",
+Mild_01.jpg,Mild,bbox,24,23,176,260,Mild,,
+Mild_01.jpg,Mild,polygon,,,,,Mild,"[[24, 61], [25, 259], [179, 259], [176, 23], [21, 22], [28, 69], [28, 66], [24, 256]]",
+Mild_05.jpg,Mild,bbox,6,27,189,272,Mild,,
+Mild_05.jpg,Mild,polygon,,,,,Mild,"[[5, 33], [190, 29], [189, 272], [6, 270], [4, 29]]",

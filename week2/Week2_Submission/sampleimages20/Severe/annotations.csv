@@ -1,0 +1,6 @@
+filename,classification,ann_type,x1,y1,x2,y2,label,polygon_pts,note
+Severe_01.jpg,Severe,bbox,0,0,224,224,Severe,,
+Severe_02.jpg,Severe,bbox,0,0,224,224,Severe,,
+Severe_03.jpg,Severe,bbox,0,0,224,224,Severe,,
+Severe_04.jpg,Severe,bbox,0,0,224,224,Severe,,
+Severe_05.jpg,Severe,bbox,0,0,224,224,Severe,,

@@ -1,0 +1,13 @@
+{
+  "box_mAP50": 0.9879,
+  "mask_mAP50": 0.9879,
+  "mask_mAP50_95": 0.9356,
+  "mask_precision": 0.9751,
+  "mask_recall": 0.9727,
+  "per_class_mask_AP50": {
+    "No_Pain": 0.9844,
+    "Mild": 0.9859,
+    "Moderate": 0.9949,
+    "Severe": 0.9864
+  }
+}

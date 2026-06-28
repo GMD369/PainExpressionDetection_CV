@@ -1,0 +1,20 @@
+{
+  "total_images": 2288,
+  "grabcut_masks": 2288,
+  "bbox_fallback": 0,
+  "skipped": 0,
+  "split_counts": {
+    "train/No_Pain": 341,
+    "val/No_Pain": 73,
+    "test/No_Pain": 74,
+    "train/Mild": 251,
+    "val/Mild": 54,
+    "test/Mild": 55,
+    "train/Moderate": 503,
+    "val/Moderate": 108,
+    "test/Moderate": 109,
+    "train/Severe": 503,
+    "val/Severe": 108,
+    "test/Severe": 109
+  }
+}
